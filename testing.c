@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
+#include <pthread.h>
 
 void error(const char *msg) {
     perror(msg);
@@ -17,7 +18,7 @@ ssize_t read_all(int socket, void *buffer, size_t size) {
     ssize_t bytes_read;
 
     while (total_read < size) {
-        bytes_read = read(socket, (int *)buffer + total_read, size - total_read);
+        bytes_read = read(socket, (float *)buffer + total_read, size - total_read);
         if (bytes_read <= 0) {
             return -1;
         }
@@ -26,6 +27,24 @@ ssize_t read_all(int socket, void *buffer, size_t size) {
     }
 
     return total_read;
+}
+
+
+float pearson_cor(int arr[], int y[], int n){
+    float x=0;
+    float x2=0;
+    float y=0;
+    float y2=0;
+    float xy=0;
+    for (int i=0;i<n;n++){
+        x += arr[i];
+        x2 += arr[i] * arr[i];
+        y += y[i];
+        y2 += y[i] * y[i];
+        xy += x[i] * y[i];
+    }
+
+    return ((m * xy) - (x * y)) / (m * x2) - (x);
 }
 
 int main(int argc, char *argv[]) {
@@ -55,11 +74,18 @@ int main(int argc, char *argv[]) {
         printf("\nT = %i\n", t);
 
         // initialize array to split
-        int *array;
-        array = (int *)malloc(n * n * sizeof(int));
+        float *array;
+        array = (float *)malloc(n * n * sizeof(float));
 
         for (int i = 0; i < n * n; i++) {
             array[i] = (rand() % 99) + 1;
+        }
+
+        // initialize y vector
+        float *y;
+        y = (float *)malloc(n * sizeof(float));
+        for (int i=0; i<n; i++) {
+            y[i] = (random() % 99) + 1;
         }
 
         // initialize index
@@ -97,18 +123,16 @@ int main(int argc, char *argv[]) {
                 printf("\nConnection Failed \n");
                 return -1;
             }
-
-            // send the number of rows
-            int *rows;
-            rows = (int *)malloc(sizeof(int));
+            float *rows;
+            rows = (float *)malloc(sizeof(float));
 
 
             rows[0] = threadIndex == t? chunk_size/n : n/t;
             // printf("\nRows = %d\n",rows[0]);
 
             // initialize submatrix
-            int *submatrix;
-            submatrix = (int *)malloc(chunk_size * sizeof(int));
+            float *submatrix;
+            submatrix = (float *)malloc(chunk_size * sizeof(float));
             int currIndex = 0;
             for (int i = startingIndex; i < endingIndex; i++) {
                 submatrix[currIndex] = array[i];
@@ -131,9 +155,14 @@ int main(int argc, char *argv[]) {
             clock_t t;
             t = clock();
 
+            // send rows
             send(sock, rows, sizeof(int), 0);
-            send(sock, submatrix, chunk_size * sizeof(int), 0);
+            // send submatrix
+            send(sock, submatrix, chunk_size * sizeof(float), 0);
             printf("Array sent\n");
+            // send y vector
+            send(sock, y, n * sizeof(float));
+
 
             // wait for ack from slave
             char ack_msg[4] = "ack";
@@ -200,28 +229,26 @@ int main(int argc, char *argv[]) {
             exit(EXIT_FAILURE);
         }
 
-        // time_before
-        clock_t t;
-        t = clock();
-
         if ((new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen)) < 0) {
             perror("accept");
             exit(EXIT_FAILURE);
         }
-
-        int *rows;
-        rows = (int *)malloc(sizeof(int));
-
-        read_all(new_socket, rows, sizeof(int));
+        // receive rows
+        float *rows;
+        rows = (float *)malloc(sizeof(float));
+        read_all(new_socket, rows, sizeof(float));
         printf("Rows: %i\n", rows[0]);
 
-
+        // receive submatrix
         int chunk_size = rows[0] * n;
-        int *buffer;
-        buffer = (int *)malloc(chunk_size * sizeof(int));
+        float *buffer;
+        buffer = (float *)malloc(chunk_size * sizeof(float));
+        read_all(new_socket, buffer, chunk_size * sizeof(float));
 
-
-        read_all(new_socket, buffer, chunk_size * sizeof(int));
+        // receive vector
+        float *y_vector;
+        y_vector = (float *)malloc(chunk_size * sizeof(float));
+        read_all(new_socket,y_vector, n * sizeof(float));
 
 
 
@@ -239,6 +266,13 @@ int main(int argc, char *argv[]) {
         send(new_socket, "ack", 4, 0);
 
         printf("\nSent ack to master\n");
+
+        // time_before
+        clock_t t;
+        t = clock();
+
+        //pearson cor
+
 
         // time_after
         t = clock() - t;
