@@ -127,7 +127,7 @@ int main(int argc, char *argv[]) {
             rows = (float *)malloc(sizeof(float));
 
 
-            rows[0] = threadIndex == t? chunk_size/n : n/t;
+            rows[0] = threadIndex == t? int(chunk_size)/n : n/t;
             // printf("\nRows = %d\n",rows[0]);
 
             // initialize submatrix
