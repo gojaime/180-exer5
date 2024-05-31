@@ -174,7 +174,8 @@ int main(int argc, char *argv[]) {
             }
             else printf("Received ack from %s\n",buffer);
 
-            // wait for vector
+            // wait for r vector
+            
 
             threadIndex++;
             free(submatrix);
@@ -311,7 +312,9 @@ int main(int argc, char *argv[]) {
             yIndex++;
             // printf("%f ", buffer[i]);
         }
-        printf("\n");
+
+        // send vector
+        
 
 
         // time_after
