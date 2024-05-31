@@ -205,6 +205,7 @@ int main(int argc, char *argv[]) {
         struct sockaddr_in address;
         int opt = 1;
         int addrlen = sizeof(address);
+        
 
         if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
             perror("socket failed");
@@ -241,6 +242,7 @@ int main(int argc, char *argv[]) {
         rows = (float *)malloc(sizeof(float));
         read_all(new_socket, rows, sizeof(float));
         printf("Rows: %f\n", rows[0]);
+        int chunk_size = rows[0] * n;
 
         // receive vector
         float *y_vector;
@@ -248,13 +250,10 @@ int main(int argc, char *argv[]) {
         read_all(new_socket,y_vector, n * sizeof(float));
 
         // receive submatrix
-        int chunk_size = rows[0] * n;
         float *buffer;
         buffer = (float *)malloc(chunk_size * sizeof(float));
         read_all(new_socket, buffer, chunk_size * sizeof(float));
         
-
-
 
         // show received array
         printf("Array received: \n");
@@ -262,7 +261,7 @@ int main(int argc, char *argv[]) {
             if (i % n == 0) {
                 printf("\n");
             }
-            printf("%i ", buffer[i]);
+            printf("%f ", buffer[i]);
         }
         printf("\n");
 
