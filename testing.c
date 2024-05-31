@@ -175,7 +175,7 @@ int main(int argc, char *argv[]) {
             else printf("Received ack from %s\n",buffer);
 
             // wait for r vector
-            
+
 
             threadIndex++;
             free(submatrix);
@@ -257,14 +257,14 @@ int main(int argc, char *argv[]) {
 
 
         // show received array
-        // printf("Array received: \n");
-        // for (int i = 0; i < chunk_size; i++) {
-        //     if (i % n == 0) {
-        //         printf("\n");
-        //     }
-        //     printf("%i ", buffer[i]);
-        // }
-        // printf("\n");
+        printf("Array received: \n");
+        for (int i = 0; i < chunk_size; i++) {
+            if (i % n == 0) {
+                printf("\n");
+            }
+            printf("%i ", buffer[i]);
+        }
+        printf("\n");
 
         // send ack back to master
         send(new_socket, "ack", 4, 0);
