@@ -93,6 +93,9 @@ int main(int argc, char *argv[]) {
         int endingIndex = chunk_size;
         int threadIndex = 1;
 
+        // time_before
+        clock_t t_start = clock();
+
         // loop through slave IPs
         while (fgets(buffer, bufferLength, fp)) {
             printf("Sending to %s\n", buffer);
@@ -139,9 +142,6 @@ int main(int argc, char *argv[]) {
                 endingIndex += chunk_size;
             }
 
-            // time_before
-            clock_t t_start = clock();
-
             // send rows
             send(sock, &rows, sizeof(float), 0);
             // send submatrix
@@ -166,15 +166,14 @@ int main(int argc, char *argv[]) {
             threadIndex++;
             free(submatrix);
             close(sock);
-
-            // time_after
-            double time_taken = ((double)(clock() - t_start)) / CLOCKS_PER_SEC;
-            printf("Elapsed time: %f seconds\n", time_taken);
         }
 
         free(array);
         free(y);
         fclose(fp);
+        // time_after
+        double time_taken = ((double)(clock() - t_start)) / CLOCKS_PER_SEC;
+        printf("Elapsed time: %f seconds\n", time_taken);
 
     } else if (s == 1) {
         // slave mode
@@ -247,7 +246,6 @@ int main(int argc, char *argv[]) {
         double time_taken = ((double)(clock() - t_start)) / CLOCKS_PER_SEC;
         printf("Elapsed time: %f seconds\n", time_taken);
 
-        // clean up
         free(y_vector);
         free(buffer);
         free(correlation_results);
